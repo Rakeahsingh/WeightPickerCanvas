@@ -1,4 +1,4 @@
-package com.example.weightpickercanvas.weightPickerScreen
+package com.example.weightpickercanvas.weightPickerScreen.components
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
