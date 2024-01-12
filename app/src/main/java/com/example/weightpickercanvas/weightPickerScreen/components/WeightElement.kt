@@ -3,6 +3,7 @@ package com.example.weightpickercanvas.weightPickerScreen.components
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,11 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.withRotation
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 @Composable
@@ -44,8 +48,43 @@ fun Scale(
     var angle by remember {
         mutableFloatStateOf(0f)
     }
+    var dragStartedAngle by remember {
+        mutableFloatStateOf(0f)
+    }
+    var oldAngle by remember {
+        mutableFloatStateOf(angle)
+    }
 
-    Canvas(modifier = modifier){
+    Canvas(
+        modifier = modifier
+            .pointerInput(true){
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        dragStartedAngle = -atan2(
+                            y = circleCenter.x - offset.x,
+                            x = circleCenter.y - offset.y
+                        ) * (180f / PI.toFloat())
+                    },
+                    onDragEnd = {
+                        oldAngle = angle
+                    }
+                ) { change, _ ->
+                    val touchAngle = -atan2(
+                        y = circleCenter.x - change.position.x,
+                        x = circleCenter.y - change.position.y
+                    ) * (180f / PI.toFloat())
+
+                    val newAngle = oldAngle + (touchAngle - dragStartedAngle)
+                    angle = newAngle.coerceIn(
+                        minimumValue = initialWeight - maxWeight.toFloat(),
+                        maximumValue = initialWeight - minWeight.toFloat()
+                    )
+
+                    onWeightChange((initialWeight - angle).roundToInt())
+
+                }
+            }
+    ){
         center = this.center
         circleCenter = Offset(center.x, scaleWidth.toPx() / 2f + radius.toPx() )
 
